@@ -1,0 +1,4 @@
+com/mycompany/decoder/Decoder.class
+com/mycompany/decoder/AdeunisPayload.class
+com/mycompany/decoder/MilesightPayload.class
+com/mycompany/decoder/database.class
