@@ -16,11 +16,14 @@ import java.util.Arrays;
  */
 public class DRAGINOPayload {
 
+    //varaibles 
     static private char[] c_payload;
     private static Connection connection;
     private static PreparedStatement preparedStatement;
     private static final String URL = "jdbc:mysql://localhost:3306/iotib2";
     private static final database iotib = new database(URL, "root", "root");
+    
+    //Mas variables
     private final String deveui;
     private String DATA1 = null;
     private int DATA2 = 0;
@@ -33,10 +36,15 @@ public class DRAGINOPayload {
     private String DATA8 = null;
     private double DATA9 = 0;
 
+    //constructor
     public DRAGINOPayload(String payload, Connection connection) throws SQLException {
         c_payload = payload.toCharArray();
         this.deveui = iotib.obtenerXstring(connection, "DEV_EUI", "data");
     }
+    
+    ////////////////////////////////////////////////////////////////////////////
+        ///////////////////////METODOS DE CONVERSIÓN/////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     //de Bytes (decimal) a binario 0000
     private String Binary(char[] bin, int bitnum) {
@@ -70,9 +78,9 @@ public class DRAGINOPayload {
         return decimal;
     }
 
-    //////////////////////////////////////////////////////////////////////////////
-    /////////////METODOS FPORT2
-    ///////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+        ///////////////////////METODOS DE APLICACIÓN//////////////////////
+    ///////////////////////////////////////////////////////////////////////////
     private void statusAlarm(char[] byteNumber) {
 
         // Posición simpre serà 0 y 1 
@@ -152,9 +160,6 @@ public class DRAGINOPayload {
 
     }
 
-    //////////////////////////////////////////////////////////////////////////////
-    /////////////METODOS FPORT5
-    ///////////////////////////////////////////////////////////////////////////////
     //Modelo del dispositivo 
     private void Model(char[] byteNumber) {
 
@@ -302,6 +307,10 @@ public class DRAGINOPayload {
         
         DATA9 = bateria;
     }
+    
+    ////////////////////////////////////////////////////////////////////////////
+        ///////////////////////SUBPROGRAMAS PRINCIPALES///////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     private void fPORT2() throws SQLException {
 
@@ -338,6 +347,10 @@ public class DRAGINOPayload {
         batteryInfo(part5);
 
     }
+    
+    ////////////////////////////////////////////////////////////////////////////
+             ////////////////////////MAIN CODE/////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     public void FrameCode() throws SQLException {
 

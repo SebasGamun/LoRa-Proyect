@@ -20,11 +20,13 @@ public class SenseCapPayload {
     private double DATA4 = 0;
     private String DATA5 = null;
 
+    /////////////////////////////////////////////////////////////////////////////7
     public SenseCapPayload(String payload, Connection connection) throws SQLException {
         c_payload = payload.toCharArray();
         this.deveui = iotib.obtenerXstring(connection, "DEV_EUI", "data");
     }
 
+    ////////////////////////////////////////////////////////////////////////////////7
     //de hexadecimal a decimal
     private int Hexadecimal(char[] hex, int x, int y) {
 
@@ -34,6 +36,7 @@ public class SenseCapPayload {
         return decimal;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
     public void FrameCode() throws SQLException {
 
         connection = iotib.abrirConexion();
@@ -60,7 +63,7 @@ public class SenseCapPayload {
                 StringBuilder stringBuilder = new StringBuilder();
                 StringBuilder stringBuilder2 = new StringBuilder();
 
-                //BATERIA
+                //BASIC INFORMATION
                 if (c_payload[i] == '0' && c_payload[i + 1] == '0') {
 
                     //llenamos el array type con los 4 siguienes digitos de c_payload i y c_payload i+1
@@ -112,6 +115,7 @@ public class SenseCapPayload {
                     }
                 }
 
+                //SENSOR DATA
                 if (c_payload[i] == '0' && c_payload[i + 1] == '1') {
 
                     //llenamos el array type con los 4 siguienes digitos de c_payload i y c_payload i+1

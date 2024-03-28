@@ -6,18 +6,16 @@ import java.sql.SQLException;
 
 public class MilesightPayload {
 
-    // Arreglo para almacenar el payload como caracteres
+    // Variables privadas estáticas
     private final char[] c_payload;
     private final char[] type = new char[2]; 
-
-    // URL de la base de datos MySQL y variables relacionadas
     static String URL = "jdbc:mysql://localhost:3306/iotib2";
     static database iotib = new database(URL, "root", "root");
     static Connection connection;
     static PreparedStatement preparedStatement;
-    private int posicion;
     
-    // Variables para almacenar diferentes datos procesados
+    // Variables privadas 
+    private int posicion;
     private int Bat = 0;
     private String DATA1 = null;
     private String DATA2 = null;
@@ -39,54 +37,17 @@ public class MilesightPayload {
     private String DATAY =null;
     private final String deveui;
 
-    //////////////////////////////////////////////////////////////
-    private String Version(char[] pay) {
-        // Eliminar el dígito '0' a la izquierda
-        int startIndex = (pay[0] == '0') ? 1 : 0;
-        char[] trimmedArray = new char[pay.length - startIndex];
-        System.arraycopy(pay, startIndex, trimmedArray, 0, trimmedArray.length);
-
-        // Construir el string con puntos entre los dígitos
-        StringBuilder version = new StringBuilder();
-        boolean puntoAgregado = false;
-
-        for (int i = 0; i < trimmedArray.length; ++i) {
-            version.append(trimmedArray[i]);
-
-            // Agregar punto solo si no se ha agregado antes y el carácter actual no es un punto
-            if (!puntoAgregado && trimmedArray[i] != '.') {
-                version.append('.');
-                puntoAgregado = true;
-            }
-        }
-
-        return version.toString();
+    //////////////////////////////////////////////////////////////////////
+    // Constructor que recibe un payload y una conexión a la base de datos
+    public MilesightPayload(String payload, Connection connection) throws SQLException {
+        c_payload = payload.toCharArray();
+        this.deveui = iotib.obtenerXstring(connection, "DEV_EUI", "data");
     }
-
-    //Metodo para passar de un array de x caracteres a binario y de binario a decimal 
-    private int Conversor(int p, int longitud) {
-        StringBuilder sb = new StringBuilder();
-        char[] newChar = new char[longitud];
-
-        if (longitud / 4 == 4) {
-            for (int j = 0; j < longitud; j++) {
-                newChar[j] = (Binario(p + 2) + Binario(p + 3) + Binario(p) + Binario(p + 1)).charAt(j);
-                sb.append(newChar[j]);
-            }
-        } else if (longitud / 4 == 2) {
-            for (int j = 0; j < longitud; j++) {
-                newChar[j] = (Binario(p) + Binario(p + 1)).charAt(j);
-                sb.append(newChar[j]);
-            }
-
-        }
-
-        String valor = sb.toString();
-        int decimal = Integer.parseInt(valor, 2);
-
-        return decimal;
-    }//FIN//FIN
-
+    
+    ////////////////////////////////////////////////////////////////////////////
+        /////////////////////////METODOS DE CONVERSIÓN/////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    
     //Convierte x caracteres de c_payload en decimal 
     private int Hexadecimal(int x, int y) {
 
@@ -118,6 +79,57 @@ public class MilesightPayload {
         }
 
     }//FIN
+    
+    ////////////////////////////////////////////////////////////////////////////
+        /////////////////////////METODOS DE APLICACIÓN//////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    
+    private String Version(char[] pay) {
+        // Eliminar el dígito '0' a la izquierda
+        int startIndex = (pay[0] == '0') ? 1 : 0;
+        char[] trimmedArray = new char[pay.length - startIndex];
+        System.arraycopy(pay, startIndex, trimmedArray, 0, trimmedArray.length);
+
+        // Construir el string con puntos entre los dígitos
+        StringBuilder version = new StringBuilder();
+        boolean puntoAgregado = false;
+
+        for (int i = 0; i < trimmedArray.length; ++i) {
+            version.append(trimmedArray[i]);
+
+            // Agregar punto solo si no se ha agregado antes y el carácter actual no es un punto
+            if (!puntoAgregado && trimmedArray[i] != '.') {
+                version.append('.');
+                puntoAgregado = true;
+            }
+        }
+
+        return version.toString();
+    }//FIN  
+
+    //Metodo para passar de un array de x caracteres a binario y de binario a decimal 
+    private int Conversor(int p, int longitud) {
+        StringBuilder sb = new StringBuilder();
+        char[] newChar = new char[longitud];
+
+        if (longitud / 4 == 4) {
+            for (int j = 0; j < longitud; j++) {
+                newChar[j] = (Binario(p + 2) + Binario(p + 3) + Binario(p) + Binario(p + 1)).charAt(j);
+                sb.append(newChar[j]);
+            }
+        } else if (longitud / 4 == 2) {
+            for (int j = 0; j < longitud; j++) {
+                newChar[j] = (Binario(p) + Binario(p + 1)).charAt(j);
+                sb.append(newChar[j]);
+            }
+
+        }
+
+        String valor = sb.toString();
+        int decimal = Integer.parseInt(valor, 2);
+
+        return decimal;
+    }//FIN
 
     //switch de classes A,B y C
     private void Classes(int longitud) {
@@ -145,7 +157,7 @@ public class MilesightPayload {
         }
     }//FIN
 
-    //Convierte el segundoByte en binario y te hace la función especifica siguiente
+    /*//Convierte el segundoByte en binario y te hace la función especifica siguiente
     private void SegundoByte(int longitud) {
 
         String StringSegundoByte = Binario(longitud + 2) + Binario(longitud + 3);   //crear una string que una ambas string de digitos binarios
@@ -160,12 +172,12 @@ public class MilesightPayload {
             }
         }
         System.out.println("");//visualització per pantalla millora
-    }//FIN
+    }//FIN*/
 
     //Subdatas
-    private void Subdatas(int longitud) {
+    private void Subdatas(int p) {
 
-        String StringSegundoByte = Binario(longitud + 2) + Binario(longitud + 3);   //crear una string que una ambas string de digitos binarios
+        String StringSegundoByte = Binario(p + 2) + Binario(p + 3);   //crear una string que una ambas string de digitos binarios
         char[] ArraySegundoByte = StringSegundoByte.toCharArray();    //Convertirla en cadena
         String[] value = {"", "Presure", "TV0C", "C02", "Ligth", "Activity", "Humity", "Temperature"};  //Crear una cadena de Strings
 
@@ -228,13 +240,9 @@ public class MilesightPayload {
         }
 
     }
-    
-
-    // Constructor que recibe un payload y una conexión a la base de datos
-    public MilesightPayload(String payload, Connection connection) throws SQLException {
-        c_payload = payload.toCharArray();
-        this.deveui = iotib.obtenerXstring(connection, "DEV_EUI", "data");
-    }
+////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////MAIN CODE //////////////////////////
+///////////////////////////////////////////////////////////////////////////
 
     // Método para procesar los payloads de uplink
     public void FrameCode() throws SQLException {
@@ -257,7 +265,10 @@ public class MilesightPayload {
                 posicion = 0;
                 StringBuilder stringBuilder = new StringBuilder();
 
+                ///////////////////////////////////////////
                 //BASIC INFORMATION
+                //////////////////////////////////////////
+                
                 if (c_payload[i] == 'F' && c_payload[i + 1] == 'F') {   //Primera condición
 
                     type[0] = c_payload[i + 2];  //usamos el array type para llenarla de los siguientes dígitos de la condición
@@ -362,13 +373,14 @@ public class MilesightPayload {
                             System.out.print("\n    00 => All Sensors");
 
                         }
-                        SegundoByte(posicion);
+                        //SegundoByte(posicion);
                         Subdatas(posicion);
                     }
                 }
-                /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                ///////////////////////////////////SENSOR DATA  
-                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+                ///////////////////////////////////////////
+                //SENSOR DATA
+                //////////////////////////////////////////
 
                 boolean temperaturaProcesada = false;   //para que en la descodificación de algunos dispositivos no nos salga la de otros.
                 

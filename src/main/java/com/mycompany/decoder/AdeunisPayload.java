@@ -14,6 +14,8 @@ public class AdeunisPayload {
     private static String DATAX;
     private static String DATAY;
     private static String DATAZ;
+    
+    
     private int DATA1 = 0;
     private int DATA2 = 0;
     private int DATA3 = 0;
@@ -24,9 +26,67 @@ public class AdeunisPayload {
     private int DATA8 = 0;
     private String DATA9 = null;
     private final String deveui;
+    
+    // Constructor clase AdeunisPayload
+    public AdeunisPayload(String payload, Connection connection) throws SQLException {
+        c_payload = payload.toCharArray();
+        this.deveui = iotib.obtenerXstring(connection, "DEV_EUI", "data");
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////7
+    ///////////////////////////CONVERSIONS METHODS///////////////////////////////
+    //conversión a hexadecimal
+    private static int Hexadecimal(int x, int y) {
 
-    //////////////////////////////////////////////////////////////////////////
-    ///////////////////STATUS BYTE/////////////////////////////7
+        String hexadecimal = new String(c_payload, x, y);
+        int decimal = Integer.parseInt(hexadecimal, 16);
+
+        return decimal;
+    }
+
+    //conversión a horas
+    private static int Horas(int decimal) {
+        int horas = decimal / 3600;
+        return horas;
+    }
+
+    //conversión minutos
+    private static int Minutos(int decimal) {
+        int minutos = (decimal % 3600) / 60;
+        return minutos;
+    }
+
+    //conversión a segundos
+    private static int Segundos(int decimal) {
+        int segundos = decimal % 60;
+        return segundos;
+    }
+
+    //conversión a binario 
+    private static String Binario(int bitnum) {
+
+        if (c_payload[bitnum] >= 48 && c_payload[bitnum] <= 57) {
+            String binario = Integer.toBinaryString(c_payload[bitnum] - 48);
+
+            while (binario.length() < 4) {
+                binario = "0" + binario;
+            }
+            return binario;
+
+        } else {
+
+            String binario = Integer.toBinaryString(Hexadecimal(2, 1));
+
+            while (binario.length() < 4) {
+                binario = "0" + binario;
+            }
+            return binario;
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    ///////////////////APLICATION METHODS////////////////////7
+    
     private void StatusByte1() throws SQLException {
 
         if (c_payload[2] >= 48 && c_payload[2] <= 57) {
@@ -99,59 +159,6 @@ public class AdeunisPayload {
             }
         }
     }
-
-    ////////////////////////////////////////////////////////////////////////////7
-    ///////////////////////////CONVERSIONS METHODS///////////////////////////////
-    //conversión a hexadecimal
-    private static int Hexadecimal(int x, int y) {
-
-        String hexadecimal = new String(c_payload, x, y);
-        int decimal = Integer.parseInt(hexadecimal, 16);
-
-        return decimal;
-    }
-
-    //conversión a horas
-    private static int Horas(int decimal) {
-        int horas = decimal / 3600;
-        return horas;
-    }
-
-    //conversión minutos
-    private static int Minutos(int decimal) {
-        int minutos = (decimal % 3600) / 60;
-        return minutos;
-    }
-
-    //conversión a segundos
-    private static int Segundos(int decimal) {
-        int segundos = decimal % 60;
-        return segundos;
-    }
-
-    //conversión a binario 
-    private static String Binario(int bitnum) {
-
-        if (c_payload[bitnum] >= 48 && c_payload[bitnum] <= 57) {
-            String binario = Integer.toBinaryString(c_payload[bitnum] - 48);
-
-            while (binario.length() < 4) {
-                binario = "0" + binario;
-            }
-            return binario;
-
-        } else {
-
-            String binario = Integer.toBinaryString(Hexadecimal(2, 1));
-
-            while (binario.length() < 4) {
-                binario = "0" + binario;
-            }
-            return binario;
-        }
-    }
-    //////////////////////////////////////////////////////////////////////////////
-    ///////////////////APLICATION METHODS////////////////////7
 
     //CONFIGURACIÓN DEL BOTÓN DE ALARMA
     private void AlarmButton(int buttonNumber, int bitNumber) {
@@ -343,48 +350,23 @@ public class AdeunisPayload {
 
     }
 
-    //INICIO DEL ESTADO ACTUAL Y PASADO
-    private void AlarmState(int bitNumber1, int bitNumber2) {
-
-        int c_binario2[] = new int[4];
-
-        for (int i = 0; i < Binario(5).length(); i++) {
-            c_binario2[i] = (Binario(5).charAt(i) - 48);
-        }
-
-        if (c_binario2[bitNumber1] == 1) {
-            System.out.println("Current state: ON/CLOSED");
-            DATA4 = 1; //"ON/CLOSED";
-        } else {
-            System.out.println("Current state: OFF/OPENED");
-            DATA4 = 0; // "OFF/OPENED";
-        }
-        if (c_binario2[bitNumber2] == 1) {
-            System.out.println("Previous state: ON/CLOSED");
-            DATA5 = 1; // "ON/CLOSED";
-        } else {
-            System.out.println("Previous state: OFF/OPENED");
-            DATA5 = 0; // "OFF/OPENED";
-        }
-    }
-
     //INICIO DEL DUTY CYCLE Y ADR
-    private void DutyCycleAndADR(int bitNumber1, int bitNumber2) {
+    private void DutyCycleAndADR(int bitNumber) {
 
         int c_binario[] = new int[4];
 
-        for (int i = 0; i < Binario(5).length(); i++) {
-            c_binario[i] = (Binario(5).charAt(i) - 48);
+        for (int i = 0; i < Binario(bitNumber).length(); i++) {
+            c_binario[i] = (Binario(bitNumber).charAt(i) - 48);
         }
 
-        if (c_binario[bitNumber2] == 1) {
+        if (c_binario[1] == 1) {
             System.out.println("Duty Cycle Activated");
             DATA3 = 1; //"Duty Cycle Activated";
         } else {
             System.out.println("Duty Cycle Desactivated");
             DATA3 = 0; // "Duty Cycle Desactivated";
         }
-        if (c_binario[bitNumber1] == 1) {
+        if (c_binario[3] == 1) {
             System.out.println("ADR ON");
             DATA4 = 1; // "ADR ON";
         } else {
@@ -394,9 +376,9 @@ public class AdeunisPayload {
     }//FINAL DEL DUTY CYCLE Y ADR 
 
     //INICIO DE LA PRESNEICA 
-    private void Presence(int bitNum) {
+    private void Presence(int bitNumber) {
 
-        if (c_payload[bitNum] == '1') {
+        if (c_payload[bitNumber] == '1') {
             System.out.println("Presencia detectada");
             DATA9 = "Hay Presencia";
             DATA3 = 1; //"Presencia detectada";
@@ -408,27 +390,19 @@ public class AdeunisPayload {
     }
 
     //INICIO DE LA PRESENCIA + LUMINOSIDAD
-    private void PresAndLum(char[] payload) {
-        int contador = (payload.length - 6) / 4;
+    private void PresAndLum() {
+        int contador = (c_payload.length - 6) / 4;
         for (int i = 0; i < contador; i++) {
             int periodo = i + 1;
-            int decimal_1 = Hexadecimal(6 + 4 * i, 2);
-            int decimal_2 = Hexadecimal(8 + 4 * i, 2);
+            int presencia = Hexadecimal(6 + 4 * i, 2);
+            int luminosidad = Hexadecimal(8 + 4 * i, 2);
 
-            System.out.println("Durante el periodo " + periodo + " se ha detectado una presencia el " + decimal_1 + " % del tiempo");
-            DATA4 = decimal_1; //" % del tiempo";
-            System.out.println("La luminosidad medida ha sido de un " + decimal_2 + " %");
-            DATA5 = decimal_2;
+            System.out.println("Durante el periodo " + periodo + " se ha detectado una presencia el " + presencia + " % del tiempo");
+            DATA4 = presencia; //" % del tiempo";
+            System.out.println("La luminosidad medida ha sido de un " + luminosidad + " %");
+            DATA5 = luminosidad;
             System.out.println("");
         }
-
-    }
-
-
-// Constructor clase AdeunisPayload
-    public AdeunisPayload(String payload, Connection connection) throws SQLException {
-        c_payload = payload.toCharArray();
-        this.deveui = iotib.obtenerXstring(connection, "DEV_EUI", "data");
     }
 
     /////////////////////////////////////////////////////////////////////////////
@@ -511,7 +485,7 @@ public class AdeunisPayload {
                         StatusByte2();
 
                         //Inicio del 2ndo Byte
-                        DutyCycleAndADR(3, 1);
+                        DutyCycleAndADR(5);
 
                         //Inico del 3r Byte 
                         if (c_payload[7] == '1') {
@@ -534,7 +508,7 @@ public class AdeunisPayload {
                         Presence(5);    //al enviar la trama
 
                         //Inicio del resto de Bytes
-                        PresAndLum(c_payload);
+                        PresAndLum();
 
                         break;
 
